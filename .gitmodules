@@ -1,0 +1,3 @@
+[submodule "purescript-concur"]
+	path = purescript-concur
+	url = https://github.com/ajnsit/purescript-concur
