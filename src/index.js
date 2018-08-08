@@ -1,4 +1,4 @@
-import Main from "./Purescript/output/Main";
+import Main from "../output/Main";
 import registerServiceWorker from './registerServiceWorker';
 
 Main.main();

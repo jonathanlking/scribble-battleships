@@ -19,7 +19,7 @@
     "purescript-react-dom": "^6.0.0",
     "purescript-web-dom": "^1.0.0",
     "purescript-web-html": "^1.0.0",
-    "purescript-concur-react": "../../purescript-concur"
+    "purescript-concur-react": "./purescript-concur"
   },
   "devDependencies": {
     "purescript-affjax": "^6.0.0",
