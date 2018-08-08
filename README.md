@@ -10,8 +10,6 @@ A Starter kit for Purescript-Concur + Webpack
 
 ### Build Purescript code
 
-> cd src/Purescript
-
 > bower install
 
 > pulp build
