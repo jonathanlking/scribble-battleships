@@ -73,9 +73,9 @@ class IxMonad m where
   ipure ∷ ∀ a x. a → m x x a
   ibind ∷ ∀ a b x y z. m x y a → (a → m y z b) → m x z b
 
-newtype Session v c i t a = Session ((Channel c i) -> Widget v (Tuple (Channel c t) a))
+newtype Session m c i t a = Session ((Channel c i) -> m (Tuple (Channel c t) a))
 
-instance sessionIxMonad :: Monoid v => IxMonad (Session v c) where
+instance sessionIxMonad :: Monad m => IxMonad (Session m c) where
   ipure x = Session (\c -> pure (Tuple c x))
   ibind (Session s) f
     = Session (\c -> (s c) 
@@ -83,10 +83,10 @@ instance sessionIxMonad :: Monoid v => IxMonad (Session v c) where
           (Session s') -> s' c'))
 
 -- TODO: Work out how to derive these from the bind/pure definitions?
-instance sessionFunctor :: Functor (Session v c i i) where
+instance sessionFunctor :: Functor m => Functor (Session m c i i) where
   map f (Session s) = Session (\c -> map (\(Tuple _ x) -> Tuple c $ f x) $ s c)
 
-instance sessionApply :: Apply (Session v c i i) where
+instance sessionApply :: Apply m => Apply (Session m c i i) where
   apply (Session f) (Session s) = Session (\c -> apply (h $ f c) (s c))
     where
     h :: forall f a b c.
@@ -95,22 +95,22 @@ instance sessionApply :: Apply (Session v c i i) where
       -> f (Tuple c a -> Tuple c b)
     h = map (\(Tuple _ f) -> \(Tuple c x)  -> Tuple c (f x))
 
-instance sessionBind :: Bind (Session v c i i) where
+instance sessionBind :: Bind m => Bind (Session m c i i) where
   bind (Session s) f = Session (\c -> (s c) >>= (\(Tuple _ x) -> case f x of (Session s') -> s' c))
 
-instance sessionApplicative :: Applicative (Session v c i i) where
+instance sessionApplicative :: Applicative m => Applicative (Session m c i i) where
   pure x = Session (\c -> pure (Tuple c x))
 
-instance sessionMonad :: Monad (Session v c i i)
+instance sessionMonad :: Monad m => Monad (Session m c i i)
 
-instance sessionMonadEffect :: MonadEffect (Widget v) => MonadEffect (Session v c i i) where
+instance sessionMonadEffect :: MonadEffect m => MonadEffect (Session m c i i) where
   liftEffect eff = Session (\c -> map (Tuple c) (liftEffect eff))
 
 -- TODO: Find out why the `Monoid v` constraint isn't implied
-instance sessionMonadAff :: (MonadAff (Widget v), Monoid v) => MonadAff (Session v c i i) where
+instance sessionMonadAff :: MonadAff m => MonadAff (Session m c i i) where
   liftAff aff = Session (\c -> map (Tuple c) (liftAff aff))
 
-liftWidget :: forall v c i a. Widget v a -> Session v c i i a
+liftWidget :: forall v c i a. Widget v a -> Session (Widget v) c i i a
 liftWidget w = Session \c -> map (Tuple c) w
 
 data Channel c s = Channel c (AVar (List Json))
@@ -136,42 +136,42 @@ close :: forall r c s p.
 close _ (Channel c _) = uClose c
 
 -- | Designed for a binary session (with direct communication)
-session :: forall r n c p s t v a.
+session :: forall r n c p s t m a.
      Transport c p
   => Initial r s
   => Terminal r t
   => RoleName r n
   => IsSymbol n
-  => Monoid v
+  => MonadAff m
   => Proxy c
   -> Role r
   -> p
-  -> Session v c s t a
-  -> Widget v a
+  -> Session m c s t a
+  -> m a
 session _ r p (Session prog) = do
   (c :: Channel c s) <- liftAff $ open r p
   (Tuple c' x) <- prog c
   liftAff $ close r c'
   pure x
 
-send :: forall r rn c a s t v p. 
+send :: forall r rn c a s t m p. 
      Send r s t a
   => RoleName r rn
   => IsSymbol rn
   => Transport c p
   => EncodeJson a
-  => Monoid v
-  => a -> Session v c s t Unit
+  => MonadAff m
+  => a -> Session m c s t Unit
 send x = Session \c@(Channel t _) -> 
   map (Tuple (unsafeCoerce c)) 
     (liftAff $ uSend t $ encodeMessage (Role :: Role r) (encodeJson x))
 
-receive :: forall r c a s t v p. 
+receive :: forall r c a s t m p. 
      Receive r s t a
   => Transport c p
   => DecodeJson a
-  => Monoid v
-  => Session v c s t a
+  => MonadAff m
+  => Session m c s t a
 receive = Session \c@(Channel t bv) ->
   map (Tuple (unsafeCoerce c)) $ liftAff $ do
     b <- take bv
@@ -207,14 +207,14 @@ instance elemEmpty ::
      Fail (Beside (Text l) (Text "is not a supported choice"))
   => Elem Nil l e 
 
-choice :: forall r c s ts u funcs row v p.
+choice :: forall r c s ts u funcs row m p.
      Branch r s ts
   => Terminal r u
   => Transport c p 
-  => Functions (Session v c) ts u funcs
+  => Functions (Session m c) ts u funcs
   => ListToRow funcs row
-  => Monoid v
-  => Record row -> Session v c s u Unit
+  => MonadAff m
+  => Record row -> Session m c s u Unit
 choice row = Session \c@(Channel ch bv) ->
   map (Tuple (unsafeCoerce c)) $ liftAff $ do
    x <- uReceive ch
@@ -229,16 +229,16 @@ choice row = Session \c@(Channel ch bv) ->
                        else throwError (error $ "Branch chosen `"
                                               <> label  <> "`  is not supported")
 
-select :: forall r rn c s ts t label v p.
+select :: forall r rn c s ts t label m p.
      Select r s ts
   => RoleName r rn
   => IsSymbol rn
   => Transport c p
   => Elem ts label t
   => IsSymbol label
-  => Monoid v
-  => SProxy label -> Session v c s t Unit
-select _ = unsafeCoerce (pure unit :: Session _ _ s s _)
+  => MonadAff m
+  => SProxy label -> Session m c s t Unit
+select _ = unsafeCoerce (pure unit :: Session m c s s Unit)
 
 -- | Encode a message with role information for the proxy
 encodeMessage :: forall r rn.

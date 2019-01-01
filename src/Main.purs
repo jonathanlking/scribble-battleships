@@ -46,7 +46,8 @@ main = do
   log "Hello sailor!"
 --  runWidgetInDom "root" (pingPong <> formWidget {name: "", rememberMe: false})
 --  runWidgetInDom "root" fibWidget
-  runWidgetInDom "root" sessionFibWidget
+  runWidgetInDom "root" (sessionFibWidget 9160 <> sessionFibWidget 9161)
+--  runWidgetInDom "root" (sessionFibWidget <> sessionFibWidget2)
 
 -- | A Text input that returns its contents on enter
 textInputEnter :: String -> String -> Boolean -> Widget HTML String
@@ -68,7 +69,7 @@ fib 0 = 1
 fib 1 = 1
 fib n = fib (n - 1) + fib (n - 2)
 
-fib' :: forall v. Monoid v => Int -> SC.Session v WebSocket MS.S9 MS.S9 Int
+fib' :: forall v. Monoid v => Int -> SC.Session (Widget v) WebSocket MS.S9 MS.S9 Int
 fib' n
   | n <= 1    = pure 1
   | otherwise = do
@@ -94,16 +95,29 @@ fibWidget = do
   x <- fibFormWidget Nothing
   text (show $ fib x)
 
-sessionFibWidget :: forall a. Widget HTML a
-sessionFibWidget = SC.session 
+sessionFibWidget :: forall a. Int -> Widget HTML a
+sessionFibWidget port = SC.session 
   (Proxy :: Proxy WebSocket)
   (Role :: Role MS.Client)
-  (URL $ "ws://localhost:9160") $ do
+  (URL $ "ws://localhost:" <> show port) $ do
   x <- SC.liftWidget $ fibFormWidget Nothing
   res <- fib' x
   SC.select (SProxy :: SProxy "quit")
   SC.send MS.Quit
   SC.liftWidget $ text $ show res
+  where
+    bind = SC.ibind
+    pure = SC.ipure
+    discard = bind
+
+sessionFibWidget2 :: forall a. Widget HTML a
+sessionFibWidget2 = SC.session 
+  (Proxy :: Proxy WebSocket)
+  (Role :: Role MS.Client)
+  (URL $ "ws://localhost:9160") $ do
+  SC.select (SProxy :: SProxy "quit")
+  SC.send MS.Quit
+  SC.liftWidget $ text $ show 5
   where
     bind = SC.ibind
     pure = SC.ipure
