@@ -20,6 +20,7 @@
     "purescript-web-dom": "^1.0.0",
     "purescript-web-html": "^1.0.0",
     "purescript-scribble": "purescript-scribble",
+    "purescript-indexed-monad": "^1.0.0",
     "purescript-concur-react": "./purescript-concur"
   },
   "devDependencies": {
