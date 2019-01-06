@@ -36,23 +36,50 @@ import Scribble.WebSocket (WebSocket, URL(..))
 import Control.Bind.Indexed (ibind)
 import Control.Applicative.Indexed (ipure)
 
+import Data.Newtype (wrap, unwrap)
+import Data.Foldable (fold)
+import Game.BattleShips as BS
+import Data.Lens (set)
+import Data.Lens.Index (ix)
+import Data.Lens.Indexed (itraversed)
+import Data.Lens.Setter (iover)
+
 main :: Effect Unit
-main = runWidgetInDom "root" (counterWidget 0 <> fibWidget 9160)
+-- main = runWidgetInDom "root" (fibWidget 9160)
+main = runWidgetInDom "root" (legend <> gameWidget)
 
--- | A Text input that returns its contents on enter
-textInputEnter :: String -> String -> Boolean -> Widget HTML String
-textInputEnter value hint reset = do
-    e <- D.input [P.defaultValue value, P.onChange, P.placeholder hint]
-    -- HACK: Using forced do notation, to force evaluation of the text input value in the same handler
-    new <- pure $ unsafeGetVal e
---    when reset $ liftEffect (P.resetTargetValue "" e)
-    pure new
-  where
-    unsafeGetVal e = (unsafeCoerce e).target.value
+gameWidget :: forall a. Widget HTML a
+gameWidget = do
+  board <- setupGameWidget
+  playerBoard board
 
--- fib 0 = 1
--- fib 1 = 1
--- fib n = fib (n - 1) + fib (n - 2)
+-- Produces the board for the player
+setupGameWidget :: Widget HTML (BS.Board BS.PlayerTile)
+setupGameWidget = do
+  let mkButton i t = button [i <$ onClick] [text $ show t]
+      board = unwrap $ mempty :: BS.Board BS.PlayerTile
+  pos <- h4' [text "Place your ship:"] <|> (fold $ iover itraversed mkButton board)
+  pure $ wrap $ set (ix pos) (BS.Ship false) board
+
+playerTileWidget :: forall a. BS.PlayerTile -> Widget HTML a
+playerTileWidget t 
+  = button [disabled true] [text $ show t]
+
+playerBoard :: forall a. BS.Board BS.PlayerTile -> Widget HTML a
+playerBoard b
+  = h4' [text "Your board:"] <|> (fold $ playerTileWidget <$> unwrap b)
+
+legend :: forall a. Widget HTML a
+legend = div'
+    [ h4'[text "Legend"]
+    , p' [text "~ = Empty sea"]
+    , p' [text "s = Your ship"]
+    , p' [text "? = Unknown enemy sea"]
+    , p' [text "* = Hit enemy ship"]
+    , p' [text "! = Missed attack"]
+    ]
+
+-- MathServer fibonacci example
 
 fib :: forall v. Monoid v => Int -> Session (Widget v) WebSocket MS.S9 MS.S9 Int
 fib n
@@ -69,16 +96,11 @@ fib n
     pure = ipure
     discard = bind
 
--- fibWidget :: forall a. Widget HTML a
--- fibWidget = do
---   x <- fibFormWidget Nothing
---   text (show $ fib x)
-
 fibWidget :: forall a. Int -> Widget HTML a
 fibWidget port = do
-  _ <- button [onClick] [text "Start!"]
+  _ <- button [onClick] [text "Connect to MathServer"]
   res <- sessionFibWidget port
-  _ <- (text $ show res) <> button [onClick] [text "Reset"]
+  _ <- h4' [text $ show res] <> button [onClick] [text "Reset"]
   fibWidget port
   
 sessionFibWidget :: forall a. Int -> Widget HTML Int
@@ -116,6 +138,17 @@ fibFormWidget input = do
       case input of
         Nothing -> fibFormWidget Nothing
         Just i  -> pure i
+
+-- | A Text input that returns its contents on enter
+textInputEnter :: String -> String -> Boolean -> Widget HTML String
+textInputEnter value hint reset = do
+    e <- D.input [P.defaultValue value, P.onChange, P.placeholder hint]
+    -- HACK: Using forced do notation, to force evaluation of the text input value in the same handler
+    new <- pure $ unsafeGetVal e
+--    when reset $ liftEffect (P.resetTargetValue "" e)
+    pure new
+  where
+    unsafeGetVal e = (unsafeCoerce e).target.value
 
 -- Counter widget from Concur examples
 counterWidget :: forall a. Int -> Widget HTML a

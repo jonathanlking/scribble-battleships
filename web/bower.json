@@ -20,6 +20,7 @@
     "purescript-web-dom": "^1.0.0",
     "purescript-web-html": "^1.0.0",
     "purescript-indexed-monad": "^1.0.0",
+    "purescript-profunctor-lenses": "^5.0.0",
     "purescript-scribble": "./purescript-scribble",
     "purescript-concur-react": "./purescript-concur"
   },
