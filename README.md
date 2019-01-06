@@ -1,10 +1,16 @@
-# Purescript-Concur-Webpack-Starter
+# Scribble Battleships
 
-A Starter kit for Purescript-Concur + Webpack
+This is based on the [Purescript-Concur + Webpack starter pack](https://github.com/ajnsit/purescript-concur-webpack-starter)
 
 ## Usage
 
-### Get the purescript-concur dependency
+### Generate the Battleships protocol
+
+TODO
+
+Protocol is described in `Game.scr`
+
+### Get the purescript-scribble dependency
 
 > git submodule update --init --recursive
 
@@ -13,6 +19,10 @@ A Starter kit for Purescript-Concur + Webpack
 > bower install
 
 > pulp build
+
+### Start the Battleships game server
+
+TODO
 
 ### Run Dev Server
 
