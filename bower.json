@@ -25,8 +25,8 @@
   },
   "devDependencies": {
     "purescript-affjax": "^6.0.0",
-    "purescript-argonaut-core": "^4.0.0",
-    "purescript-argonaut-codecs": "^4.0.0",
+    "purescript-argonaut-core": "^4.0.1",
+    "purescript-argonaut-codecs": "^5.1.1",
     "purescript-console": "^4.1.0",
     "purescript-datetime": "^4.0.0",
     "purescript-now": "^4.0.0",
