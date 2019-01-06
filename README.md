@@ -14,15 +14,19 @@ Protocol is described in `Game.scr`
 
 > git submodule update --init --recursive
 
+## Server
+
+Start the Battleships game server
+
+TODO
+
+## Web
+
 ### Build Purescript code
 
 > bower install
 
 > pulp build
-
-### Start the Battleships game server
-
-TODO
 
 ### Run Dev Server
 

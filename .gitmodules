@@ -1,6 +1,6 @@
 [submodule "purescript-concur"]
-	path = purescript-concur
+	path = web/purescript-concur
 	url = https://github.com/ajnsit/purescript-concur
 [submodule "purescript-scribble"]
-	path = purescript-scribble
+	path = web/purescript-scribble
 	url = https://github.com/jonathanlking/purescript-scribble
