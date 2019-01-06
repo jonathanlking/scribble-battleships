@@ -4,7 +4,7 @@ import Prelude
 
 import Concur.Core (Widget)
 import Concur.React (HTML)
-import Concur.React.DOM (button, div', h4', text, input)
+import Concur.React.DOM (button, div', h4', text, input, p')
 import Concur.React.DOM as D
 import Concur.React.Props (onClick, _type, value, onChange, checked, disabled)
 import Concur.React.Props as P
@@ -31,9 +31,10 @@ import Data.Symbol (SProxy(..))
 import Scribble.Protocol.Arithmetic.MathServer as MS
 
 import Scribble.FSM
-import Scribble.Core
+import Scribble.Session
 import Scribble.WebSocket (WebSocket, URL(..))
-import Scribble.Concur as SC
+import Control.Bind.Indexed (ibind)
+import Control.Applicative.Indexed (ipure)
 
 pingPong :: forall a. Widget HTML a
 pingPong = do
@@ -45,8 +46,9 @@ main :: Effect Unit
 main = do
   log "Hello sailor!"
 --  runWidgetInDom "root" (pingPong <> formWidget {name: "", rememberMe: false})
---  runWidgetInDom "root" fibWidget
-  runWidgetInDom "root" (sessionFibWidget 9160 <> sessionFibWidget 9161)
+  runWidgetInDom "root" (example 1 <> example 2)
+--  runWidgetInDom "root" (counterWidget 0 <> loopWidget 9160 <> counterWidget 0 <> loopWidget 9160)
+--  runWidgetInDom "root" (sessionFibWidget 9160 <> sessionFibWidget 9161)
 --  runWidgetInDom "root" (sessionFibWidget <> sessionFibWidget2)
 
 -- | A Text input that returns its contents on enter
@@ -69,19 +71,19 @@ fib 0 = 1
 fib 1 = 1
 fib n = fib (n - 1) + fib (n - 2)
 
-fib' :: forall v. Monoid v => Int -> SC.Session (Widget v) WebSocket MS.S9 MS.S9 Int
+fib' :: forall v. Monoid v => Int -> Session (Widget v) WebSocket MS.S9 MS.S9 Int
 fib' n
   | n <= 1    = pure 1
   | otherwise = do
      x <- fib' (n - 1)
      y <- fib' (n - 2)
-     SC.select (SProxy :: SProxy "add")
-     SC.send (MS.Add x y)
-     MS.Sum s <- SC.receive
+     select (SProxy :: SProxy "add")
+     send (MS.Add x y)
+     MS.Sum s <- receive
      pure s
   where
-    bind = SC.ibind
-    pure = SC.ipure
+    bind = ibind
+    pure = ipure
     discard = bind
 
 -- This is like Elm's Action
@@ -95,33 +97,49 @@ fibWidget = do
   x <- fibFormWidget Nothing
   text (show $ fib x)
 
-sessionFibWidget :: forall a. Int -> Widget HTML a
-sessionFibWidget port = SC.session 
+sessionFibWidget :: forall a. Int -> Widget HTML Int
+sessionFibWidget port = session 
   (Proxy :: Proxy WebSocket)
-  (Role :: Role MS.Client)
-  (URL $ "ws://localhost:" <> show port) $ do
-  x <- SC.liftWidget $ fibFormWidget Nothing
+  (Role :: Role MS.Client) $ do
+  connect (Role :: Role MS.Server) (URL $ "ws://localhost:" <> show port)
+  x <- lift $ fibFormWidget Nothing
   res <- fib' x
-  SC.select (SProxy :: SProxy "quit")
-  SC.send MS.Quit
-  SC.liftWidget $ text $ show res
+  select (SProxy :: SProxy "quit")
+  send MS.Quit
+  disconnect (Role :: Role MS.Server)
+  pure res
   where
-    bind = SC.ibind
-    pure = SC.ipure
+    bind = ibind
+    pure = ipure
     discard = bind
 
-sessionFibWidget2 :: forall a. Widget HTML a
-sessionFibWidget2 = SC.session 
-  (Proxy :: Proxy WebSocket)
-  (Role :: Role MS.Client)
-  (URL $ "ws://localhost:9160") $ do
-  SC.select (SProxy :: SProxy "quit")
-  SC.send MS.Quit
-  SC.liftWidget $ text $ show 5
-  where
-    bind = SC.ibind
-    pure = SC.ipure
-    discard = bind
+example :: forall a. Int -> Widget HTML a
+example x = do
+  liftEffect (log $ "example" <> show x)
+  _ <- button [onClick] [text $ "example" <> show x]
+  example x
+
+loopWidget :: forall a. Int -> Widget HTML a
+loopWidget port = do
+--  liftEffect (log $ "helo" <> show port)
+  _ <- button [onClick] [text "start!"]
+  res <- sessionFibWidget port
+  _ <- (text $ show res) <> button [onClick] [text "Reset"]
+  loopWidget port
+  
+
+-- sessionFibWidget2 :: forall a. Widget HTML a
+-- sessionFibWidget2 = session 
+--   (Proxy :: Proxy WebSocket)
+--   (Role :: Role MS.Client)
+--   (URL $ "ws://localhost:9160") $ do
+--   select (SProxy :: SProxy "quit")
+--   send MS.Quit
+--   lift $ text $ show 5
+--   where
+--     bind = ibind
+--     pure = ipure
+--     discard = bind
 
 data FibFormAction
   = Input String
@@ -161,3 +179,13 @@ formWidget form = do
   where
     checkbox b = (RememberMe $ not b) <$ input [_type "checkbox", checked b, onChange]
 --    textbox v =  Name <$> input [_type "text", value v, onChange]
+
+counterWidget :: forall a. Int -> Widget HTML a
+counterWidget count = do
+  n <- div'
+        [ p' [text ("State: " <> show count)]
+        , button [onClick] [text "Increment"] $> count+1
+        , button [onClick] [text "Decrement"] $> count-1
+        ]
+  liftEffect (log ("COUNT IS NOW: " <> show n))
+  counterWidget n

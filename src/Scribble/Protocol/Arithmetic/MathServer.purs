@@ -1,7 +1,7 @@
 module Scribble.Protocol.Arithmetic.MathServer where
 
 import Scribble.FSM
-import Scribble.Type.SList (type (:::), SLProxy(..), SNil, symbols)
+import Type.SList (type (:::), SLProxy(..), SNil, symbols)
 import Type.Row (Cons, Nil)
 import Data.Void (Void)
 
@@ -56,19 +56,23 @@ foreign import data Client :: Role
 
 instance roleNameClient :: RoleName Client "Client"
 
+foreign import data S9Connect :: Type
 foreign import data S9 :: Type
 foreign import data S9Add :: Type
 foreign import data S9Multiply :: Type
 foreign import data S9Quit :: Type
+foreign import data S9Disconnect :: Type
 foreign import data S10 :: Type
 foreign import data S11 :: Type
 foreign import data S12 :: Type
 
-instance initialClient :: Initial Client S9
+instance initialClient :: Initial Client S9Connect
+instance connectS9Connect :: Connect Client Server S9Connect S9
 instance terminalClient :: Terminal Client S10
 instance sendS9Add :: Send Server S9Add S11 Add
 instance sendS9Multiply :: Send Server S9Multiply S12 Multiply
-instance sendS9Quit :: Send Server S9Quit S10 Quit
+instance disconnectS9Disconnect :: Disconnect Client Server S9Disconnect S10
+instance sendS9Quit :: Send Server S9Quit S9Disconnect Quit
 instance selectS9 :: Select Server S9 (Cons "multiply" S9Multiply (Cons "quit" S9Quit (Cons "add" S9Add Nil)))
 instance receiveS11 :: Receive Server S11 S9 Sum
 -- instance sendS11 ::
