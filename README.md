@@ -16,9 +16,11 @@ Protocol is described in `Game.scr`
 
 ## Server
 
+> stack build
+
 Start the Battleships game server
 
-TODO
+> stack exec server
 
 ## Web
 
