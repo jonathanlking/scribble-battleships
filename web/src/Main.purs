@@ -39,27 +39,28 @@ import Control.Applicative.Indexed (ipure)
 import Data.Newtype (wrap, unwrap)
 import Data.Foldable (fold)
 import Game.BattleShips as BS
-import Data.Lens (set)
-import Data.Lens.Index (ix)
 import Data.Lens.Indexed (itraversed)
 import Data.Lens.Setter (iover)
 
 main :: Effect Unit
 -- main = runWidgetInDom "root" (fibWidget 9160)
-main = runWidgetInDom "root" (legend <> gameWidget)
+main = runWidgetInDom "root" (fibWidget 9160 <> fibWidget 9160 <> legend <> gameWidget)
 
 gameWidget :: forall a. Widget HTML a
 gameWidget = do
-  board <- setupGameWidget
+  config <- setupGameWidget
+  -- Send our config to the Board role
+  let board = BS.mkBoard config
+  x <- playerBoard board <|> opponentBoard mempty
+  liftEffect $ log $ show x
   playerBoard board
 
--- Produces the board for the player
-setupGameWidget :: Widget HTML (BS.Board BS.PlayerTile)
+-- Produces the board config for the player
+setupGameWidget :: Widget HTML BS.Config
 setupGameWidget = do
-  let mkButton i t = button [i <$ onClick] [text $ show t]
+  let mkTile i t = button [BS.mkConfig i <$ onClick] [text $ show t]
       board = unwrap $ mempty :: BS.Board BS.PlayerTile
-  pos <- h4' [text "Place your ship:"] <|> (fold $ iover itraversed mkButton board)
-  pure $ wrap $ set (ix pos) (BS.Ship false) board
+  h4' [text "Place your ship:"] <|> (fold $ iover itraversed mkTile board)
 
 playerTileWidget :: forall a. BS.PlayerTile -> Widget HTML a
 playerTileWidget t 
@@ -68,6 +69,12 @@ playerTileWidget t
 playerBoard :: forall a. BS.Board BS.PlayerTile -> Widget HTML a
 playerBoard b
   = h4' [text "Your board:"] <|> (fold $ playerTileWidget <$> unwrap b)
+
+-- The board will produce the index of a valid move played
+opponentBoard :: BS.Board BS.OpponentTile -> Widget HTML Int
+opponentBoard b
+  = let mkTile i t = button [disabled (not $ BS.playable t), i <$ onClick] [text $ show t]
+    in h4' [text "Opponent's board:"] <|> (fold $ iover itraversed mkTile $ unwrap b)
 
 legend :: forall a. Widget HTML a
 legend = div'

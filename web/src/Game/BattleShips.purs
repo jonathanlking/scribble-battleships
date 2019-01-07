@@ -1,17 +1,30 @@
 module Game.BattleShips
   ( Board
+  , Config(..)
   , PlayerTile(..)
   , OpponentTile(..)
   , Result(..)
+  , mkConfig
+  , playable
+  , placeShip
+  , mkBoard
   , size
   )
   where
 
 import Prelude
 import Data.Array (zipWith)
-import Data.Newtype (class Newtype)
+import Data.Lens (set)
+import Data.Lens.Index (ix)
 import Data.Maybe (Maybe(..))
+import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.Unfoldable (replicate)
+
+-- A initial game configuration
+newtype Config = Config Int
+
+mkConfig :: Int -> Config
+mkConfig = Config
 
 data PlayerTile
   = Empty
@@ -36,11 +49,33 @@ data OpponentTile
  | HitShip
  | Missed
 
+derive instance opponentTileEq :: Eq OpponentTile
+
+instance opponentTileSemigroup :: Semigroup OpponentTile where
+  append Unknown x = Unknown
+  append x Unknown = Unknown
+  append Missed Missed = Missed
+  append HitShip x = HitShip
+  append x HitShip = HitShip
+
+instance opponentTileMonoid :: Monoid OpponentTile where
+  mempty = Unknown
+
 instance opponentTileShow :: Show OpponentTile where
   show = case _ of
     Unknown -> "?"
     HitShip -> "*"
     Missed  -> "."
+
+-- Pre: The index is within the board
+placeShip :: Int -> Board PlayerTile -> Board PlayerTile
+placeShip pos = wrap <<< set (ix pos) (Ship false) <<< unwrap
+
+mkBoard :: Config -> Board PlayerTile
+mkBoard (Config pos) = placeShip pos mempty
+
+playable :: OpponentTile -> Boolean
+playable = (==) Unknown
 
 data Result
  = Hit

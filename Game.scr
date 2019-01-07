@@ -1,7 +1,8 @@
 module Game;
 
 type <purescript> "Int" from "Prim" as Int;
-type <purescript> "Config" from "Game.BattleShip" as config; // Ship configuration
+type <purescript> "Config" from "Game.BattleShip" as Config; // Ship configuration
+type <purescript> "Location" from "Game.BattleShip" as Location; // Ship position
 
 explicit global protocol BattleShip(role P1, role P2, role Board) {
     Init(Config) connect P1 to Board;
@@ -11,24 +12,23 @@ explicit global protocol BattleShip(role P1, role P2, role Board) {
     disconnect P2 and Board;
 }
 
+// TODO: This isn't quite correct...
 global protocol Game(role Atk, role Svr, role Def) {
-    Coord(Int, Int) from Atk to Svr;
+    Attack(Location) from Atk to Svr;
     choice at Svr { // Svr knows if it's a hit
         Hit() from Svr to Atk;
-        Hit(Int, Int) from Svr to Def;
+        Attack(Location) from Svr to Def;
         do Game(Atk, Svr, Def);
     } or {
-        choice at Svr {
-            Sunk() from Svr to Atk;
-            Sunk(Int, Int) from Svr to Def;
-            do Game(Atk, Svr, Def);
-        } or {
-            Winner() from Svr to Atk;
-            Loser() from Svr to Def;
-        }
+        Sunk() from Svr to Atk;
+        Attack(Location) from Svr to Def;
+        do Game(Atk, Svr, Def);
+    } or {
+        Winner() from Svr to Atk;
+        Loser() from Svr to Def;
     } or {
         Miss() from Svr to Atk;
-        Miss(Int, Int) from Svr to Def;
+        Attack(Location) from Svr to Def;
         do Game(Def, Svr, Atk);
     }
 }
