@@ -32,7 +32,7 @@ import Scribble.Protocol.Arithmetic.MathServer as MS
 
 import Scribble.FSM
 import Scribble.Session
-import Scribble.WebSocket (WebSocket, URL(..))
+import Scribble.Transport.WebSocket (WebSocket, URL(..))
 import Control.Bind.Indexed (ibind)
 import Control.Applicative.Indexed (ipure)
 
