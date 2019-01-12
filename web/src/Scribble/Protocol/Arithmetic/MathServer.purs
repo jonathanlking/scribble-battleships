@@ -1,9 +1,9 @@
 module Scribble.Protocol.Arithmetic.MathServer where
 
 import Scribble.FSM
-import Type.SList (type (:::), SLProxy(..), SNil, symbols)
 import Type.Row (Cons, Nil)
 import Data.Void (Void)
+import Data.Tuple (Tuple)
 
 -- From purescript-argonaut-codecs
 import Data.Argonaut.Decode (class DecodeJson)
@@ -20,6 +20,12 @@ derive instance genericAdd :: Generic Add _
 instance encodeJsonAdd :: EncodeJson Add where
   encodeJson = genericEncodeJson
 instance decodeJsonAdd :: DecodeJson Add where
+  decodeJson = genericDecodeJson
+data Connect = Connect
+derive instance genericConnect :: Generic Connect _
+instance encodeJsonConnect :: EncodeJson Connect where
+  encodeJson = genericEncodeJson
+instance decodeJsonConnect :: DecodeJson Connect where
   decodeJson = genericDecodeJson
 data Multiply = Multiply Int Int
 derive instance genericMultiply :: Generic Multiply _
@@ -48,56 +54,55 @@ instance decodeJsonSum :: DecodeJson Sum where
 
 foreign import data MathServer :: Protocol
 
-instance protocolNameMathServer :: ProtocolName MathServer "MathServer"
-
-instance protocolRoleNamesMathServer :: ProtocolRoleNames MathServer ("Client" ::: "Server" ::: SNil)
-
 foreign import data Client :: Role
 
 instance roleNameClient :: RoleName Client "Client"
 
-foreign import data S9Connect :: Type
-foreign import data S9 :: Type
-foreign import data S9Add :: Type
-foreign import data S9Multiply :: Type
-foreign import data S9Quit :: Type
-foreign import data S9Disconnect :: Type
-foreign import data S10 :: Type
 foreign import data S11 :: Type
+foreign import data S11Connected :: Type
+foreign import data S13 :: Type
+foreign import data S13Add :: Type
+foreign import data S13Multiply :: Type
+foreign import data S13Quit :: Type
+foreign import data S14 :: Type
+foreign import data S15 :: Type
+foreign import data S16 :: Type
 foreign import data S12 :: Type
 
-instance initialClient :: Initial Client S9Connect
-instance connectS9Connect :: Connect Client Server S9Connect S9
-instance terminalClient :: Terminal Client S10
-instance sendS9Add :: Send Server S9Add S11 Add
-instance sendS9Multiply :: Send Server S9Multiply S12 Multiply
-instance disconnectS9Disconnect :: Disconnect Client Server S9Disconnect S10
-instance sendS9Quit :: Send Server S9Quit S9Disconnect Quit
-instance selectS9 :: Select Server S9 (Cons "multiply" S9Multiply (Cons "quit" S9Quit (Cons "add" S9Add Nil)))
-instance receiveS11 :: Receive Server S11 S9 Sum
--- instance sendS11 ::
---      Fail "You can only receive in this state"
---   => Send r S11 t a
-instance receiveS12 :: Receive Server S12 S9 Product
+instance initialClient :: Initial Client S11
+instance terminalClient :: Terminal Client S12
+instance connectS11 :: Connect Client Server S11 S11Connected
+instance sendS11 :: Send Server S11Connected S13 Connect
+instance sendS13Add :: Send Server S13Add S14 Add
+instance sendS13Multiply :: Send Server S13Multiply S15 Multiply
+instance sendS13Quit :: Send Server S13Quit S16 Quit
+instance selectS13 :: Select Server S13 (Cons "multiply" S13Multiply (Cons "quit" S13Quit (Cons "add" S13Add Nil)))
+instance receiveS14 :: Receive Server S14 S13 Sum
+instance receiveS15 :: Receive Server S15 S13 Product
+instance disconnectS16 :: Disconnect Client Server S16 S12
 
 foreign import data Server :: Role
 
 instance roleNameServer :: RoleName Server "Server"
 
-foreign import data S20 :: Type
-foreign import data S20Add :: Type
-foreign import data S20Multiply :: Type
-foreign import data S20Quit :: Type
-foreign import data S21 :: Type
-foreign import data S22 :: Type
-foreign import data S23 :: Type
+foreign import data S26 :: Type
+foreign import data S28 :: Type
+foreign import data S28Add :: Type
+foreign import data S28Multiply :: Type
+foreign import data S28Quit :: Type
+foreign import data S29 :: Type
+foreign import data S30 :: Type
+foreign import data S31 :: Type
+foreign import data S27 :: Type
 
-instance initialServer :: Initial Server S20
-instance terminalServer :: Terminal Server S21
-instance receiveS20Add :: Receive Client S20Add S22 Add
-instance receiveS20Multiply :: Receive Client S20Multiply S23 Multiply
-instance receiveS20Quit :: Receive Client S20Quit S21 Quit
-instance branchS20 :: Branch Server S20 (Cons "add" S20Add (Cons "quit" S20Quit (Cons "multiply" S20Multiply Nil)))
-instance sendS22 :: Send Client S22 S20 Sum
-instance sendS23 :: Send Client S23 S20 Product
+instance initialServer :: Initial Server S26
+instance terminalServer :: Terminal Server S27
+instance acceptS26 :: Accept Server Client S26 S28
+instance receiveS28Add :: Receive Client S28Add S29 Add
+instance receiveS28Multiply :: Receive Client S28Multiply S30 Multiply
+instance receiveS28Quit :: Receive Client S28Quit S31 Quit
+instance branchS28 :: Branch Server S28 (Cons "multiply" S28Multiply (Cons "quit" S28Quit (Cons "add" S28Add Nil)))
+instance sendS29 :: Send Client S29 S28 Sum
+instance sendS30 :: Send Client S30 S28 Product
+instance disconnectS31 :: Disconnect Server Client S31 S27
 

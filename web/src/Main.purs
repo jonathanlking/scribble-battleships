@@ -88,7 +88,7 @@ legend = div'
 
 -- MathServer fibonacci example
 
-fib :: forall v. Monoid v => Int -> Session (Widget v) WebSocket MS.S9 MS.S9 Int
+fib :: forall v. Monoid v => Int -> Session (Widget v) WebSocket MS.S13 MS.S13 Int
 fib n
   | n <= 1    = pure 1
   | otherwise = do
@@ -115,6 +115,7 @@ sessionFibWidget port = session
   (Proxy :: Proxy WebSocket)
   (Role :: Role MS.Client) $ do
   connect (Role :: Role MS.Server) (URL $ "ws://localhost:" <> show port)
+  send MS.Connect
   x <- lift $ fibFormWidget Nothing
   res <- fib x
   select (SProxy :: SProxy "quit")

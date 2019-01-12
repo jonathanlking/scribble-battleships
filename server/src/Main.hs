@@ -50,12 +50,12 @@ main = do
     wsPort = 9160
 
 server :: WS.Connection -> IO ()
-server conn = forever $ do
+server conn = (WS.receiveData conn :: IO Text) >> (forever $ do
   action <- WS.receiveData conn :: IO Text
   case action ^? key "tag" . _String :: Maybe Text of
     Just tag | tag == "Add"      -> add $ fromJust (decode $ convertString action)
              | tag == "Multiply" -> multiply $ fromJust (decode $ convertString action)
-             | tag == "Quit"     -> WS.sendClose conn ("Quit!" :: Text)
+             | tag == "Quit"     -> WS.sendClose conn ("Quit!" :: Text))
   where
     add (Add x y) = WS.sendTextData conn $ encode $ Sum $ x + y
     multiply (Multiply x y) = WS.sendTextData conn $ encode $ Product $ x * y
