@@ -30,8 +30,8 @@ import Data.Symbol (SProxy(..))
 
 import Scribble.Protocol.Arithmetic.MathServer as MS
 
-import Scribble.FSM
-import Scribble.Session
+import Scribble.FSM (Role(..))
+import Scribble.Session (Session, session, connect, send, receive, lift, select, disconnect)
 import Scribble.Transport.WebSocket (WebSocket, URL(..))
 import Control.Bind.Indexed (ibind)
 import Control.Applicative.Indexed (ipure)

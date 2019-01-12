@@ -1,5 +1,6 @@
 module Game.BattleShips
   ( Board
+  , Location(..)
   , Config(..)
   , PlayerTile(..)
   , OpponentTile(..)
@@ -20,8 +21,28 @@ import Data.Maybe (Maybe(..))
 import Data.Newtype (class Newtype, wrap, unwrap)
 import Data.Unfoldable (replicate)
 
+import Data.Argonaut.Decode (class DecodeJson)
+import Data.Argonaut.Encode (class EncodeJson)
+import Data.Generic.Rep (class Generic) -- From purescript-generics-rep
+import Data.Argonaut.Decode.Generic.Rep (genericDecodeJson)
+import Data.Argonaut.Encode.Generic.Rep (genericEncodeJson)
+
 -- A initial game configuration
 newtype Config = Config Int
+
+derive instance configGeneric :: Generic Config _
+instance configEncodeJson :: EncodeJson Config where
+  encodeJson = genericEncodeJson
+instance configDecodeJson :: DecodeJson Config where
+  decodeJson = genericDecodeJson
+
+newtype Location = Location Int
+
+derive instance locationGeneric :: Generic Location _
+instance locationEncodeJson :: EncodeJson Location where
+  encodeJson = genericEncodeJson
+instance locationDecodeJson :: DecodeJson Location where
+  decodeJson = genericDecodeJson
 
 mkConfig :: Int -> Config
 mkConfig = Config
