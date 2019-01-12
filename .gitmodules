@@ -4,3 +4,6 @@
 [submodule "purescript-scribble"]
 	path = web/purescript-scribble
 	url = https://github.com/jonathanlking/purescript-scribble
+[submodule "web/scribble-codegen"]
+	path = scribble-java
+	url = https://github.com/jonathanlking/scribble-java/
