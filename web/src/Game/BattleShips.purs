@@ -4,10 +4,10 @@ module Game.BattleShips
   , Config(..)
   , PlayerTile(..)
   , OpponentTile(..)
-  , Result(..)
   , mkConfig
   , playable
   , placeShip
+  , setLocation
   , mkBoard
   , size
   )
@@ -98,9 +98,8 @@ mkBoard (Config pos) = placeShip pos mempty
 playable :: OpponentTile -> Boolean
 playable = (==) Unknown
 
-data Result
- = Hit
- | Miss
+setLocation :: forall a. Location -> a -> Board a -> Board a
+setLocation (Location l) x = wrap <<< set (ix l) x <<< unwrap
 
 newtype Board a = Board (Array a)
 derive instance boardNewtype :: Newtype (Board a) _

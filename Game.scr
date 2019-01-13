@@ -4,16 +4,16 @@ type <purescript> "Int" from "Prim" as int;
 type <purescript> "Config" from "Game.BattleShips" as Config; // Ship configuration
 type <purescript> "Location" from "Game.BattleShips" as Location; // Ship position
 
-explicit global protocol BattleShips(role P1, role P2, role Board) {
-    Init(Config) connect P1 to Board;
-    Init(Config) connect P2 to Board;
-    do Game(P1, Board, P2);
-    disconnect P1 and Board;
-    disconnect P2 and Board;
+explicit global protocol BattleShips(role P1, role P2, role GameServer) {
+    Init(Config) connect P1 to GameServer;
+    Init(Config) connect P2 to GameServer;
+    do Game(P1, GameServer, P2);
+    disconnect P1 and GameServer;
+    disconnect P2 and GameServer;
 }
 
 global protocol Game(role Atk, role Svr, role Def) {
-    Coord(Location) from Atk to Svr;
+    Attack(Location) from Atk to Svr;
     choice at Svr { // Svr knows if it's a hit
         Hit(Location) from Svr to Atk;
         Hit(Location) from Svr to Def;

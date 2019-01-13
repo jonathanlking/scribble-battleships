@@ -29,9 +29,10 @@ import Type.Proxy (Proxy(..))
 import Data.Symbol (SProxy(..))
 
 import Scribble.Protocol.Arithmetic.MathServer as MS
+import Scribble.Protocol.Game.BattleShips as BS
 
 import Scribble.FSM (Role(..))
-import Scribble.Session (Session, session, connect, send, receive, lift, select, disconnect)
+import Scribble.Session (Session, session, connect, send, receive, lift, combine, select, choice, disconnect)
 import Scribble.Transport.WebSocket (WebSocket, URL(..))
 import Control.Bind.Indexed (ibind)
 import Control.Applicative.Indexed (ipure)
@@ -44,16 +45,70 @@ import Data.Lens.Setter (iover)
 
 main :: Effect Unit
 -- main = runWidgetInDom "root" (fibWidget 9160)
-main = runWidgetInDom "root" (fibWidget 9160 <> fibWidget 9160 <> legend <> gameWidget)
+main = runWidgetInDom "root" (fibWidget 9160 <> fibWidget 9160 <> legend)
 
-gameWidget :: forall a. Widget HTML a
-gameWidget = do
-  config <- setupGameWidget
-  -- Send our config to the Board role
-  let board = BS.mkBoard config
-  x <- playerBoard board <|> opponentBoard mempty
-  liftEffect $ log $ show x
-  playerBoard board
+-- gameWidget :: forall a. Widget HTML a
+-- gameWidget = do
+--   config <- setupGameWidget
+--   -- Send our config to the Board role
+--   let board = BS.mkBoard config
+--   x <- playerBoard board <|> opponentBoard mempty
+--   liftEffect $ log $ show x
+--   playerBoard board
+
+battleShipsWidgetP1 :: forall a. Int -> Widget HTML a
+battleShipsWidgetP1 port = session 
+  (Proxy :: Proxy WebSocket)
+  (Role :: Role BS.P1) $ do
+    connect (Role :: Role BS.GameServer) (URL $ "ws://localhost:" <> show port)
+    config <- lift setupGameWidget
+    send $ BS.Init config
+    let pb = BS.mkBoard config
+    let ob = mempty :: BS.Board BS.OpponentTile
+    loc <- lift $ playerBoard pb <|> opponentBoard ob
+    attack pb ob
+  where
+    attack 
+      :: forall a. 
+         BS.Board BS.PlayerTile
+      -> BS.Board BS.OpponentTile
+      -> Session (Widget HTML) WebSocket BS.S16 BS.S15 a
+    attack pb ob = do
+      loc <- lift $ playerBoard pb <|> opponentBoard ob
+      send $ BS.Attack loc
+      choice
+       { winner: do
+           void receive
+           disconnect (Role :: Role BS.GameServer)
+           lift $ text "You won!"
+       , miss: do
+           BS.Miss loc <- combine receive (text "please... work! :(")
+           let ob' = BS.setLocation loc BS.Missed ob
+           defendAfterMiss pb ob'
+       , hit: do
+           BS.Hit loc <- receive
+           let ob' = BS.setLocation loc BS.HitShip ob
+           defendAfterHit pb ob'
+       }
+
+    -- TODO: Investigate why the state space split
+    defendAfterMiss
+      :: forall a.
+         BS.Board BS.PlayerTile
+      -> BS.Board BS.OpponentTile
+      -> Session (Widget HTML) WebSocket BS.S20 BS.S15 a
+    defendAfterMiss pb ob = unsafeCoerce unit
+
+    defendAfterHit
+      :: forall a.
+         BS.Board BS.PlayerTile
+      -> BS.Board BS.OpponentTile
+      -> Session (Widget HTML) WebSocket BS.S18 BS.S15 a
+    defendAfterHit _ _ = unsafeCoerce unit
+
+    bind = ibind
+    pure = ipure
+    discard = bind
 
 -- Produces the board config for the player
 setupGameWidget :: Widget HTML BS.Config
@@ -71,9 +126,9 @@ playerBoard b
   = h4' [text "Your board:"] <|> (fold $ playerTileWidget <$> unwrap b)
 
 -- The board will produce the index of a valid move played
-opponentBoard :: BS.Board BS.OpponentTile -> Widget HTML Int
+opponentBoard :: BS.Board BS.OpponentTile -> Widget HTML BS.Location
 opponentBoard b
-  = let mkTile i t = button [disabled (not $ BS.playable t), i <$ onClick] [text $ show t]
+  = let mkTile i t = button [disabled (not $ BS.playable t), BS.Location i <$ onClick] [text $ show t]
     in h4' [text "Opponent's board:"] <|> (fold $ iover itraversed mkTile $ unwrap b)
 
 legend :: forall a. Widget HTML a
