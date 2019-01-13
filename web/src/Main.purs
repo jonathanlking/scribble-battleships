@@ -44,17 +44,7 @@ import Data.Lens.Indexed (itraversed)
 import Data.Lens.Setter (iover)
 
 main :: Effect Unit
--- main = runWidgetInDom "root" (fibWidget 9160)
-main = runWidgetInDom "root" (fibWidget 9160 <> battleShipsWidgetP1 9161 <> legend)
-
--- gameWidget :: forall a. Widget HTML a
--- gameWidget = do
---   config <- setupGameWidget
---   -- Send our config to the Board role
---   let board = BS.mkBoard config
---   x <- playerBoard board <|> opponentBoard mempty
---   liftEffect $ log $ show x
---   playerBoard board
+main = runWidgetInDom "root" ({-- fibWidget 9160 <> --} battleShipsWidgetP1 9161 <> legend)
 
 battleShipsWidgetP1 :: forall a. Int -> Widget HTML a
 battleShipsWidgetP1 port = session 
@@ -67,28 +57,38 @@ battleShipsWidgetP1 port = session
     let ob = mempty :: BS.Board BS.OpponentTile
     attack pb ob
   where
+    statusUpdate 
+      :: forall a. 
+         String
+      -> BS.Board BS.PlayerTile
+      -> BS.Board BS.OpponentTile
+      -> Widget HTML Unit
+    statusUpdate message pb ob
+      = (h4' [text message]) <> (button [unit <$ onClick] [text "Continue"]) <> (playerBoard pb) <> (opponentBoardWidget ob)
     attack 
       :: forall a. 
          BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
       -> Session (Widget HTML) WebSocket BS.S16 BS.S15 a
     attack pb ob = do
-      loc <- lift $ playerBoard pb <|> opponentBoard ob
+      loc <- lift $ h4' [text "Choose a location to attack!"] <> playerBoard pb <> moveSelectionWidget ob
       send $ BS.Attack loc
       choice
-       { winner: do
-           void receive
-           disconnect (Role :: Role BS.GameServer)
-           lift $ text "You won!"
-       , miss: do
-           BS.Miss loc <- receive
-           let ob' = BS.setLocation loc BS.Missed ob
-           defendAfterMiss pb ob'
-       , hit: do
-           BS.Hit loc <- receive
-           let ob' = BS.setLocation loc BS.HitShip ob
-           defendAfterHit pb ob'
-       } `whileWaiting` (playerBoard pb <> h4' [(text "Waiting for response")])
+        { winner: do
+            void receive
+            disconnect (Role :: Role BS.GameServer)
+            lift $ h4' [text "You won!"]
+        , miss: do
+            BS.Miss loc <- receive
+            let ob' = BS.setLocation loc BS.Missed ob
+            lift $ statusUpdate "You missed!" pb ob'
+            defendAfterMiss pb ob'
+        , hit: do
+            BS.Hit loc <- receive
+            let ob' = BS.setLocation loc BS.HitShip ob
+            lift $ statusUpdate "You hit!" pb ob'
+            defendAfterHit pb ob'
+        } -- `whileWaiting` (playerBoard pb <> h4' [(text "Waiting for response")])
 
     -- TODO: Investigate why the state space split
     defendAfterMiss
@@ -96,14 +96,39 @@ battleShipsWidgetP1 port = session
          BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
       -> Session (Widget HTML) WebSocket BS.S20 BS.S15 a
-    defendAfterMiss pb ob = unsafeCoerce unit
-
+    defendAfterMiss pb ob =
+      choice
+        { loser: do
+            void receive
+            disconnect (Role :: Role BS.GameServer)
+            lift $ h4' [text "You lost!"]
+        , hit: do
+            BS.Hit loc <- receive
+            let pb' = BS.setLocation loc (BS.Ship true) pb
+            attack pb' ob
+        , miss: do 
+            BS.Miss loc <- receive
+            attack pb ob
+        }
     defendAfterHit
       :: forall a.
          BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
       -> Session (Widget HTML) WebSocket BS.S18 BS.S15 a
-    defendAfterHit _ ob = unsafeCoerce unit
+    defendAfterHit pb ob =
+      choice
+        { loser: do
+            void receive
+            disconnect (Role :: Role BS.GameServer)
+            lift $ h4' [text "You lost!"]
+        , hit: do
+            BS.Hit loc <- receive
+            let pb' = BS.setLocation loc (BS.Ship true) pb
+            attack pb' ob
+        , miss: do 
+            BS.Miss loc <- receive
+            attack pb ob
+        }
 
     bind = ibind
     pure = ipure
@@ -125,9 +150,14 @@ playerBoard b
   = h4' [text "Your board:"] <|> (fold $ playerTileWidget <$> unwrap b)
 
 -- The board will produce the index of a valid move played
-opponentBoard :: BS.Board BS.OpponentTile -> Widget HTML BS.Location
-opponentBoard b
+moveSelectionWidget :: BS.Board BS.OpponentTile -> Widget HTML BS.Location
+moveSelectionWidget b
   = let mkTile i t = button [disabled (not $ BS.playable t), BS.Location i <$ onClick] [text $ show t]
+    in h4' [text "Opponent's board:"] <|> (fold $ iover itraversed mkTile $ unwrap b)
+
+opponentBoardWidget :: forall a. BS.Board BS.OpponentTile -> Widget HTML a
+opponentBoardWidget b
+  = let mkTile i t = button [disabled true] [text $ show t]
     in h4' [text "Opponent's board:"] <|> (fold $ iover itraversed mkTile $ unwrap b)
 
 legend :: forall a. Widget HTML a

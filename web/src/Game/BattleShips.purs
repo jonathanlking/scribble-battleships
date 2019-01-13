@@ -86,7 +86,7 @@ instance opponentTileShow :: Show OpponentTile where
   show = case _ of
     Unknown -> "?"
     HitShip -> "*"
-    Missed  -> "."
+    Missed  -> "!"
 
 -- Pre: The index is within the board
 placeShip :: Int -> Board PlayerTile -> Board PlayerTile

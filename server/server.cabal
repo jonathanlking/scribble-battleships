@@ -34,3 +34,4 @@ executable server
                      , lens-aeson
                      , string-conversions
                      , vector
+                     , random
