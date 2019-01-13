@@ -16,6 +16,7 @@ import qualified Network.WebSockets as WS
 import           Control.Lens        ((^?), (&), Prism')
 import           Data.Aeson.Lens     (key, _String)
 import           Control.Monad.Fix   (fix)
+import           Control.Concurrent  (threadDelay)
 
 argonautOptions = defaultOptions {tagSingleConstructors = True, sumEncoding = TaggedObject "tag" "values"}
 
@@ -52,6 +53,7 @@ main = do
 server :: WS.Connection -> IO ()
 server conn = (WS.receiveData conn :: IO Text) >> (forever $ do
   action <- WS.receiveData conn :: IO Text
+  threadDelay 1000000
   case action ^? key "tag" . _String :: Maybe Text of
     Just tag | tag == "Add"      -> add $ fromJust (decode $ convertString action)
              | tag == "Multiply" -> multiply $ fromJust (decode $ convertString action)

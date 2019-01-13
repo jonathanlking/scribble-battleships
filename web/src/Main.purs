@@ -32,7 +32,7 @@ import Scribble.Protocol.Arithmetic.MathServer as MS
 import Scribble.Protocol.Game.BattleShips as BS
 
 import Scribble.FSM (Role(..))
-import Scribble.Session (Session, session, connect, send, receive, lift, combine, select, choice, disconnect)
+import Scribble.Session (Session, session, connect, send, receive, lift, whileWaiting, select, choice, disconnect)
 import Scribble.Transport.WebSocket (WebSocket, URL(..))
 import Control.Bind.Indexed (ibind)
 import Control.Applicative.Indexed (ipure)
@@ -82,7 +82,7 @@ battleShipsWidgetP1 port = session
            disconnect (Role :: Role BS.GameServer)
            lift $ text "You won!"
        , miss: do
-           BS.Miss loc <- combine receive (text "please... work! :(")
+           BS.Miss loc <- receive `whileWaiting` (text "please... work! :(")
            let ob' = BS.setLocation loc BS.Missed ob
            defendAfterMiss pb ob'
        , hit: do
@@ -172,7 +172,7 @@ sessionFibWidget port = session
   connect (Role :: Role MS.Server) (URL $ "ws://localhost:" <> show port)
   send MS.Connect
   x <- lift $ fibFormWidget Nothing
-  res <- fib x
+  res <- (fib x) `whileWaiting` (text "Calculating...")
   select (SProxy :: SProxy "quit")
   send MS.Quit
   disconnect (Role :: Role MS.Server)
