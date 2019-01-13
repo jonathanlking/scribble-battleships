@@ -101,7 +101,7 @@ instance acceptS26 :: Accept Server Client S26 S28
 instance receiveS28Add :: Receive Client S28Add S29 Add
 instance receiveS28Multiply :: Receive Client S28Multiply S30 Multiply
 instance receiveS28Quit :: Receive Client S28Quit S31 Quit
-instance branchS28 :: Branch Server S28 (Cons "multiply" S28Multiply (Cons "quit" S28Quit (Cons "add" S28Add Nil)))
+instance branchS28 :: Branch Server Client S28 (Cons "multiply" S28Multiply (Cons "quit" S28Quit (Cons "add" S28Add Nil)))
 instance sendS29 :: Send Client S29 S28 Sum
 instance sendS30 :: Send Client S30 S28 Product
 instance disconnectS31 :: Disconnect Server Client S31 S27

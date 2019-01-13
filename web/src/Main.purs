@@ -45,7 +45,7 @@ import Data.Lens.Setter (iover)
 
 main :: Effect Unit
 -- main = runWidgetInDom "root" (fibWidget 9160)
-main = runWidgetInDom "root" (fibWidget 9160 <> fibWidget 9160 <> legend)
+main = runWidgetInDom "root" (fibWidget 9160 <> battleShipsWidgetP1 9161 <> legend)
 
 -- gameWidget :: forall a. Widget HTML a
 -- gameWidget = do
@@ -65,7 +65,6 @@ battleShipsWidgetP1 port = session
     send $ BS.Init config
     let pb = BS.mkBoard config
     let ob = mempty :: BS.Board BS.OpponentTile
-    loc <- lift $ playerBoard pb <|> opponentBoard ob
     attack pb ob
   where
     attack 
@@ -82,14 +81,14 @@ battleShipsWidgetP1 port = session
            disconnect (Role :: Role BS.GameServer)
            lift $ text "You won!"
        , miss: do
-           BS.Miss loc <- receive `whileWaiting` (text "please... work! :(")
+           BS.Miss loc <- receive
            let ob' = BS.setLocation loc BS.Missed ob
            defendAfterMiss pb ob'
        , hit: do
            BS.Hit loc <- receive
            let ob' = BS.setLocation loc BS.HitShip ob
            defendAfterHit pb ob'
-       }
+       } `whileWaiting` (playerBoard pb <> h4' [(text "Waiting for response")])
 
     -- TODO: Investigate why the state space split
     defendAfterMiss
@@ -104,7 +103,7 @@ battleShipsWidgetP1 port = session
          BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
       -> Session (Widget HTML) WebSocket BS.S18 BS.S15 a
-    defendAfterHit _ _ = unsafeCoerce unit
+    defendAfterHit _ ob = unsafeCoerce unit
 
     bind = ibind
     pure = ipure

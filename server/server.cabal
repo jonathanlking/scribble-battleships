@@ -17,6 +17,8 @@ executable server
   default-language:    Haskell2010
   default-extensions:  NoImplicitPrelude
                      , OverloadedStrings
+  other-modules:       Server.Math
+                     , Server.BattleShips
   build-depends:       base >= 4.7 && < 5
                      , foundation
                      , websockets

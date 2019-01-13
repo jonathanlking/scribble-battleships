@@ -1,0 +1,33 @@
+module Arithmetic;
+
+type <purescript> "Int" from "Prim" as Int;
+
+explicit global protocol MathServer(role Client, role Server) {
+  Connect() connect Client to Server;
+  do Math(Client, Server);
+  disconnect Client and Server;
+}
+
+global protocol Math(role Client, role Server) {
+    choice at Client { 
+        Add(Int, Int) from Client to Server;
+        Sum(Int) from Server to Client;
+        do Math(Client, Server);
+    } or {
+        Multiply(Int, Int) from Client to Server;
+        Product(Int) from Server to Client;
+        do Math(Client, Server);
+    } or {
+        Quit() from Client to Server;
+    }
+}
+
+global protocol Addition(role Client, role Server) {
+    choice at Client { 
+        Add(Int, Int) from Client to Server;
+        Res(Int) from Server to Client;
+        do Addition(Client, Server);
+    } or {
+        Bye() from Client to Server;
+    }
+}
