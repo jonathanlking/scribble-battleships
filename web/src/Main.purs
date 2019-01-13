@@ -44,9 +44,14 @@ import Data.Lens.Indexed (itraversed)
 import Data.Lens.Setter (iover)
 
 main :: Effect Unit
-main = runWidgetInDom "root" ({-- fibWidget 9160 <> --} battleShipsWidgetP1 9161 <> legend)
+main = runWidgetInDom "root" ({-- fibWidget 9160 <> --} battleShipsGameWidget 9161 <> legend)
 
-battleShipsWidgetP1 :: forall a. Int -> Widget HTML a
+battleShipsGameWidget :: forall a. Int -> Widget HTML a
+battleShipsGameWidget port = forever $ do
+  button [unit <$ onClick] [text "Start game"]
+  battleShipsWidgetP1 port
+
+battleShipsWidgetP1 :: Int -> Widget HTML Unit
 battleShipsWidgetP1 port = session 
   (Proxy :: Proxy WebSocket)
   (Role :: Role BS.P1) $ do
@@ -58,18 +63,17 @@ battleShipsWidgetP1 port = session
     attack pb ob
   where
     statusUpdate 
-      :: forall a. 
-         String
+      :: String
       -> BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
       -> Widget HTML Unit
     statusUpdate message pb ob
-      = (h4' [text message]) <> (button [unit <$ onClick] [text "Continue"]) <> (playerBoard pb) <> (opponentBoardWidget ob)
+      = (h4' [text message]) <> (button [unit <$ onClick] [text "I'm ready to be attacked!"]) <> (playerBoard pb) <> (opponentBoardWidget ob)
+
     attack 
-      :: forall a. 
-         BS.Board BS.PlayerTile
+      :: BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
-      -> Session (Widget HTML) WebSocket BS.S16 BS.S15 a
+      -> Session (Widget HTML) WebSocket BS.S16 BS.S15 Unit
     attack pb ob = do
       loc <- lift $ h4' [text "Choose a location to attack!"] <> playerBoard pb <> moveSelectionWidget ob
       send $ BS.Attack loc
@@ -77,7 +81,7 @@ battleShipsWidgetP1 port = session
         { winner: do
             void receive
             disconnect (Role :: Role BS.GameServer)
-            lift $ h4' [text "You won!"]
+            lift $ (h4' [text "You won!"]) <> (button [unit <$ onClick] [text "Quit"])
         , miss: do
             BS.Miss loc <- receive
             let ob' = BS.setLocation loc BS.Missed ob
@@ -92,29 +96,28 @@ battleShipsWidgetP1 port = session
 
     -- TODO: Investigate why the state space split
     defendAfterMiss
-      :: forall a.
-         BS.Board BS.PlayerTile
+      :: BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
-      -> Session (Widget HTML) WebSocket BS.S20 BS.S15 a
+      -> Session (Widget HTML) WebSocket BS.S20 BS.S15 Unit
     defendAfterMiss pb ob =
       choice
         { loser: do
             void receive
             disconnect (Role :: Role BS.GameServer)
-            lift $ h4' [text "You lost!"]
+            lift $ (h4' [text "You lost!"]) <> (button [unit <$ onClick] [text "Quit"])
         , hit: do
             BS.Hit loc <- receive
             let pb' = BS.setLocation loc (BS.Ship true) pb
             attack pb' ob
         , miss: do 
             BS.Miss loc <- receive
-            attack pb ob
+            let pb' = BS.setLocation loc (BS.MissedPT) pb
+            attack pb' ob
         }
     defendAfterHit
-      :: forall a.
-         BS.Board BS.PlayerTile
+      :: BS.Board BS.PlayerTile
       -> BS.Board BS.OpponentTile
-      -> Session (Widget HTML) WebSocket BS.S18 BS.S15 a
+      -> Session (Widget HTML) WebSocket BS.S18 BS.S15 Unit
     defendAfterHit pb ob =
       choice
         { loser: do

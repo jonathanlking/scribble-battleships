@@ -47,9 +47,11 @@ instance locationDecodeJson :: DecodeJson Location where
 mkConfig :: Int -> Config
 mkConfig = Config
 
+-- TODO: Refactor MissedPT + Ship
 data PlayerTile
   = Empty
   | Ship Boolean -- Whether the ship has been hit
+  | MissedPT
 
 instance playerTileMonoid :: Monoid PlayerTile where
   mempty = Empty
@@ -57,13 +59,16 @@ instance playerTileMonoid :: Monoid PlayerTile where
 instance playerTileSemigroup :: Semigroup PlayerTile where
   append Empty x = x
   append x Empty = x
+  append MissedPT x = x
+  append x MissedPT = x
   append (Ship x) (Ship y) = Ship  $ x || y
 
 instance playerTileShow :: Show PlayerTile where
   show = case _ of
-    Empty        -> "~"
-    (Ship true)  -> "x"
-    (Ship false) -> "s"
+    Empty         -> "~"
+    (Ship true)   -> "x"
+    (Ship false)  -> "s"
+    MissedPT      -> "!"
 
 data OpponentTile
  = Unknown
