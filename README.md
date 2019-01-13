@@ -4,7 +4,13 @@ This is based on the [Purescript-Concur + Webpack starter pack](https://github.c
 
 ## Usage
 
+### Get the `purescript-scribble` and `scribble-java` dependencies
+
+> git submodule update --init --recursive
+
 ### Generate the Battleships protocol
+
+**This step is only required if you make changes to the protocol!**
 
 First build the Scribble tool
 
@@ -13,10 +19,6 @@ First build the Scribble tool
 Out protocol is described in `Game.scr`
 
 > docker run -v `pwd`:/repo --entrypoint "./scribblec.sh -d /repo/web/src/ /repo/Game.scr BattleShips" scribble-server
-
-### Get the purescript-scribble dependency
-
-> git submodule update --init --recursive
 
 ## Server
 
