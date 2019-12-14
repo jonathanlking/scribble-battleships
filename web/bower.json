@@ -21,6 +21,8 @@
     "purescript-web-html": "^1.0.0",
     "purescript-indexed-monad": "^1.0.0",
     "purescript-profunctor-lenses": "^5.0.0",
+    "purescript-generics-rep": "^6.1.1",
+    "purescript-argonaut-generic": "^4.0.0",
     "purescript-scribble": "./purescript-scribble",
     "purescript-concur-react": "./purescript-concur"
   },
@@ -32,5 +34,12 @@
     "purescript-datetime": "^4.0.0",
     "purescript-now": "^4.0.0",
     "purescript-psci-support": "^4.0.0"
+  },
+  "resolutions": {
+    "purescript-web-dom": "^1.0.0",
+    "purescript-typelevel-prelude": "^3.0.0",
+    "purescript-record": "^1.0.0",
+    "purescript-web-events": "^1.0.0",
+    "purescript-foreign-object": "^1.0.0"
   }
 }
