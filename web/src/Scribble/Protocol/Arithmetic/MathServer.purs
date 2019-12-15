@@ -1,7 +1,7 @@
 module Scribble.Protocol.Arithmetic.MathServer where
 
 import Scribble.FSM
-import Type.Row (Cons, Nil)
+import Prim.RowList (Cons, Nil)
 import Data.Void (Void)
 import Data.Tuple (Tuple)
 

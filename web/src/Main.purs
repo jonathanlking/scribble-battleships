@@ -141,7 +141,7 @@ battleShipsWidgetP1 port = session
 setupGameWidget :: Widget HTML BS.Config
 setupGameWidget = do
   let mkTile i t = button [BS.mkConfig i <$ onClick] [text $ show t]
-      board = unwrap $ mempty :: BS.Board BS.PlayerTile
+      board = mempty :: Array BS.PlayerTile
   h4' [text "Place your ship:"] <|> (fold $ iover itraversed mkTile board)
 
 playerTileWidget :: forall a. BS.PlayerTile -> Widget HTML a
