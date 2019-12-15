@@ -32,13 +32,11 @@ Start the Battleships game server
 
 ### Build Purescript code
 
-> bower install
+> yarn
 
-> pulp build
+> spago build
 
 ### Run Dev Server
-
-> yarn
 
 > yarn start
 
