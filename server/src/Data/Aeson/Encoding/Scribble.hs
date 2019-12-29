@@ -28,6 +28,7 @@ scribbleOptions
   = defaultOptions
     { tagSingleConstructors = True,
       sumEncoding = TaggedObject "tag" "values",
+      allNullaryToStringTag = False,
       omitNothingFields = False,
       unwrapUnaryRecords = False
     }
