@@ -1,5 +1,8 @@
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# OPTIONS_GHC -Wall #-}
 
 module Server.Math
   ( server
@@ -7,7 +10,7 @@ module Server.Math
 
 import           Prelude
 import           Control.Monad       (forever, (>=>))
-import           Data.Aeson          (encode, decode, toJSON, parseJSON, tagSingleConstructors, defaultOptions, sumEncoding, (.=), genericParseJSON, object, SumEncoding(..), ToJSON, FromJSON)
+import           Data.Aeson          (encode, decode, toJSON, parseJSON, tagSingleConstructors, unwrapUnaryRecords, defaultOptions, sumEncoding, (.=), genericParseJSON, object, SumEncoding(..), ToJSON, FromJSON, genericToJSON)
 import           Data.Monoid         ((<>))
 import           Data.Maybe          (fromJust)
 import           Data.Text           (Text)
@@ -19,30 +22,23 @@ import           Control.Lens        ((^?), (&), Prism')
 import           Data.Aeson.Lens     (key, _String)
 import           Control.Monad.Fix   (fix)
 import           Control.Concurrent  (threadDelay)
-
-argonautOptions = defaultOptions {tagSingleConstructors = True, sumEncoding = TaggedObject "tag" "values"}
+import           Data.Aeson.Encoding.Scribble
 
 data Add = Add Int Int
   deriving (Generic, Show)
-instance FromJSON Add where
-  parseJSON = genericParseJSON argonautOptions
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Add)
 
 data Multiply = Multiply Int Int
   deriving (Generic, Show)
-instance FromJSON Multiply where
-  parseJSON = genericParseJSON argonautOptions
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Multiply)
 
 data Sum = Sum Int
   deriving (Generic, Show)
-instance ToJSON Sum where
-  toJSON (Sum res) =
-      object ["tag" .= ("Sum" :: Text), "values" .= [res]]
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Sum)
 
 data Product = Product Int
   deriving (Generic, Show)
-instance ToJSON Product where
-  toJSON (Product res) =
-      object ["tag" .= ("Product" :: Text), "values" .= [res]]
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Product)
 
 server :: WS.Connection -> IO ()
 server conn = (WS.receiveData conn :: IO Text) >> (forever $ do
