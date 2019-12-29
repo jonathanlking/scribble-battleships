@@ -24,25 +24,33 @@ import Data.Unfoldable (replicate)
 import Data.Argonaut.Decode (class DecodeJson)
 import Data.Argonaut.Encode (class EncodeJson)
 import Data.Generic.Rep (class Generic) -- From purescript-generics-rep
-import Data.Argonaut.Decode.Generic.Rep (genericDecodeJson)
-import Data.Argonaut.Encode.Generic.Rep (genericEncodeJson)
+import Data.Argonaut.Decode.Generic.Rep (genericDecodeJsonWith)
+import Data.Argonaut.Encode.Generic.Rep (genericEncodeJsonWith)
+import Data.Argonaut.Types.Generic.Rep (Encoding)
+
+jsonEncoding :: Encoding
+jsonEncoding =
+  { tagKey: "tag"
+  , valuesKey: "values"
+  , unwrapSingleArguments: true
+  }
 
 -- A initial game configuration
 newtype Config = Config Int
 
 derive instance configGeneric :: Generic Config _
 instance configEncodeJson :: EncodeJson Config where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance configDecodeJson :: DecodeJson Config where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 
 newtype Location = Location Int
 
 derive instance locationGeneric :: Generic Location _
 instance locationEncodeJson :: EncodeJson Location where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance locationDecodeJson :: DecodeJson Location where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 
 mkConfig :: Int -> Config
 mkConfig = Config

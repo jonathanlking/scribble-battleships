@@ -2,10 +2,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE TypeApplications #-}
+{-# LANGUAGE DerivingVia #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 
 module Server.BattleShips
   ( server
+  , Location(..)
   ) where
 
 import           Prelude
@@ -23,136 +25,39 @@ import           Data.Aeson.Lens     (key, _String)
 import           Control.Monad.Fix   (fix)
 import           Control.Concurrent  (threadDelay)
 import           System.Random       (newStdGen, randomRs)
-
-argonautOptions = defaultOptions {tagSingleConstructors = True, sumEncoding = TaggedObject "tag" "values"}
-
--- TODO: Make generic JSON representation compatible
+import           Data.Aeson.Encoding.Scribble
 
 newtype Location = Location Int
   deriving (Generic, Show)
-instance FromJSON Location where
-  parseJSON 
-    = withObject "Location" $ \v -> do
-        tag <- v .: "tag"
-        guard (tag == ("Location" :: Text))
-        vs <- v .: "values"
-        case vs of
-          [(x :: Int)] -> pure $ Location x
-          _ -> mempty
-instance ToJSON Location where
-  toJSON (Location l) =
-      object ["tag" .= ("Location" :: Text), "values" .= [toJSON l]]
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Location)
 
 newtype Config = Config Int
   deriving (Generic, Show)
-instance FromJSON Config where
-  parseJSON 
-    = withObject "Config" $ \v -> do
-        tag <- v .: "tag"
-        guard (tag == ("Config" :: Text))
-        vs <- v .: "values"
-        case vs of
-          [(x :: Int)] -> pure $ Config x
-          _ -> mempty
-instance ToJSON Config where
-  toJSON (Config loc) =
-      object ["tag" .= ("Config" :: Text), "values" .= [toJSON loc]]
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Config)
 
 data Attack = Attack Location
   deriving (Generic, Show)
-instance ToJSON Attack where
-  toJSON (Attack loc) =
-      object ["tag" .= ("Attack" :: Text), "values" .= [toJSON loc]]
-instance FromJSON Attack where
-  parseJSON 
-    = withObject "Attack" $ \v -> do
-        tag <- v .: "tag"
-        guard (tag == ("Attack" :: Text))
-        vs <- v .: "values"
-        case vs of
-          [(x :: Location)] -> pure $ Attack x
-          _ -> mempty
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Attack)
 
 data Init = Init Config
   deriving (Generic, Show)
-instance FromJSON Init where
-  parseJSON 
-    = withObject "Init" $ \v -> do
-        tag <- v .: "tag"
-        guard (tag == ("Init" :: Text))
-        vs <- v .: "values"
-        case vs of
-          [(x :: Config)] -> pure $ Init x
-          _ -> mempty
-instance ToJSON Init where
-  toJSON (Init config) =
-      object ["tag" .= ("Init" :: Text), "values" .= [toJSON config]]
-
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Init)
 
 data Hit = Hit Location
   deriving (Generic, Show)
-instance ToJSON Hit where
-  toJSON (Hit loc) =
-      object ["tag" .= ("Hit" :: Text), "values" .= [toJSON loc]]
-instance FromJSON Hit where
-  parseJSON 
-    = withObject "Hit" $ \v -> do
-        tag <- v .: "tag"
-        guard (tag == ("Hit" :: Text))
-        vs <- v .: "values"
-        case vs of
-          [(x :: Location)] -> pure $ Hit x
-          _ -> mempty
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Hit)
 
 data Miss = Miss Location
   deriving (Generic, Show)
-instance ToJSON Miss where
-  toJSON (Miss loc) =
-      object ["tag" .= ("Miss" :: Text), "values" .= [toJSON loc]]
-instance FromJSON Miss where
-  parseJSON 
-    = withObject "Miss" $ \v -> do
-        tag <- v .: "tag"
-        guard (tag == ("Miss" :: Text))
-        vs <- v .: "values"
-        case vs of
-          [(x :: Location)] -> pure $ Miss x
-          _ -> mempty
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Miss)
 
 data Winner = Winner
   deriving (Generic, Show)
-instance ToJSON Winner where
-  toJSON Winner =
-      object ["tag" .= ("Winner" :: Text), "values" .= ([] :: [Value])]
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Winner)
 
 data Loser = Loser
   deriving (Generic, Show)
-instance ToJSON Loser where
-  toJSON Loser =
-      object ["tag" .= ("Loser" :: Text), "values" .= ([] :: [Value])]
-
-
-data Add = Add Int Int
-  deriving (Generic, Show)
-instance FromJSON Add where
-  parseJSON = genericParseJSON argonautOptions
-
-data Multiply = Multiply Int Int
-  deriving (Generic, Show)
-instance FromJSON Multiply where
-  parseJSON = genericParseJSON argonautOptions
-
-data Sum = Sum Int
-  deriving (Generic, Show)
-instance ToJSON Sum where
-  toJSON (Sum res) =
-      object ["tag" .= ("Sum" :: Text), "values" .= [res]]
-
-data Product = Product Int
-  deriving (Generic, Show)
-instance ToJSON Product where
-  toJSON (Product res) =
-      object ["tag" .= ("Product" :: Text), "values" .= [res]]
+  deriving (ToJSON, FromJSON) via (ScribbleJSON Loser)
 
 decodeOrDie bs 
   = case decode bs of
@@ -182,7 +87,7 @@ server conn = do
         let (target : ms') = dropWhile ((flip elem) played) ms
         if target == p1Loc
         then do
-          print "Looser"
+          print "Loser"
           WS.sendTextData conn $ encode $ Loser
         else do
           print "They missed"

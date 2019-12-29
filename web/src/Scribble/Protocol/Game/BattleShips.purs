@@ -11,47 +11,55 @@ import Data.Argonaut.Encode (class EncodeJson)
 import Data.Argonaut.Core (Json) -- From purescript-argonaut-core
 import Data.Generic.Rep (class Generic) -- From purescript-generics-rep
 -- From purescript-argonaut-generic
-import Data.Argonaut.Decode.Generic.Rep (genericDecodeJson)
-import Data.Argonaut.Encode.Generic.Rep (genericEncodeJson)
+import Data.Argonaut.Decode.Generic.Rep (genericDecodeJsonWith)
+import Data.Argonaut.Encode.Generic.Rep (genericEncodeJsonWith)
+import Data.Argonaut.Types.Generic.Rep (Encoding)
 
 import Game.BattleShips (Config, Location)
+
+jsonEncoding :: Encoding
+jsonEncoding =
+  { tagKey: "tag"
+  , valuesKey: "values"
+  , unwrapSingleArguments: true
+  }
 
 data Init = Init Config
 derive instance genericInit :: Generic Init _
 instance encodeJsonInit :: EncodeJson Init where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonInit :: DecodeJson Init where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Hit = Hit Location
 derive instance genericHit :: Generic Hit _
 instance encodeJsonHit :: EncodeJson Hit where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonHit :: DecodeJson Hit where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Miss = Miss Location
 derive instance genericMiss :: Generic Miss _
 instance encodeJsonMiss :: EncodeJson Miss where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonMiss :: DecodeJson Miss where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Attack = Attack Location
 derive instance genericAttack :: Generic Attack _
 instance encodeJsonAttack :: EncodeJson Attack where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonAttack :: DecodeJson Attack where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Loser = Loser
 derive instance genericLoser :: Generic Loser _
 instance encodeJsonLoser :: EncodeJson Loser where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonLoser :: DecodeJson Loser where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Winner = Winner
 derive instance genericWinner :: Generic Winner _
 instance encodeJsonWinner :: EncodeJson Winner where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonWinner :: DecodeJson Winner where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 
 foreign import data BattleShips :: Protocol
 
