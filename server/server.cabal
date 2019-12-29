@@ -19,7 +19,12 @@ executable server
                      , OverloadedStrings
   other-modules:       Server.Math
                      , Server.BattleShips
+  ghc-options:         -Wall
+  extensions:          DeriveGeneric
+                     , TypeApplications
+                     , DerivingVia
   build-depends:       base >= 4.7 && < 5
+                     , bytestring
                      , foundation
                      , websockets
                      , text

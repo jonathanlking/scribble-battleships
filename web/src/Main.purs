@@ -44,7 +44,7 @@ import Data.Lens.Indexed (itraversed)
 import Data.Lens.Setter (iover)
 
 main :: Effect Unit
-main = runWidgetInDom "root" ({-- fibWidget 9160 <> --} battleShipsGameWidget 9161 <> legend)
+main = runWidgetInDom "root" ({-- fibWidget 9160 <> --} battleShipsGameWidget 9160 <> legend)
 
 battleShipsGameWidget :: forall a. Int -> Widget HTML a
 battleShipsGameWidget port = forever $ do

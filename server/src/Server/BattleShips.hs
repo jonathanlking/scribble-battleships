@@ -1,28 +1,13 @@
-{-# LANGUAGE DeriveGeneric #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE GeneralizedNewtypeDeriving #-}
-{-# LANGUAGE TypeApplications #-}
-{-# LANGUAGE DerivingVia #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-
 module Server.BattleShips
   ( server
   , Location(..)
   ) where
 
 import           Prelude
-import           Control.Monad       (forever, (>=>), guard)
-import           Data.Aeson          (Value, (.:), withObject, encode, decode, toJSON, parseJSON, tagSingleConstructors, defaultOptions, sumEncoding, (.=), genericParseJSON, object, SumEncoding(..), ToJSON, FromJSON)
-import           Data.Monoid         ((<>))
-import           Data.Maybe          (fromJust)
-import           Data.Text           (Text)
-import qualified Data.Text          as T
-import           Data.String.Conversions (convertString)
+import           Data.Aeson (ToJSON, FromJSON, decode, encode)
 import           GHC.Generics        (Generic)
+import           Data.ByteString.Lazy (ByteString)
 import qualified Network.WebSockets as WS
-import           Control.Lens        ((^?), (&), Prism')
-import           Data.Aeson.Lens     (key, _String)
-import           Control.Monad.Fix   (fix)
 import           Control.Concurrent  (threadDelay)
 import           System.Random       (newStdGen, randomRs)
 import           Data.Aeson.Encoding.Scribble
@@ -59,6 +44,7 @@ data Loser = Loser
   deriving (Generic, Show)
   deriving (ToJSON, FromJSON) via (ScribbleJSON Loser)
 
+decodeOrDie :: FromJSON a => ByteString -> a
 decodeOrDie bs 
   = case decode bs of
      Nothing -> error "can't be nothing"
@@ -82,14 +68,14 @@ server conn = do
       if l == p2Loc
       then WS.sendTextData conn $ encode $ Winner
       else do
-        print "Miss"
+        print @String "Miss"
         WS.sendTextData conn $ encode $ Miss $ Location l
         let (target : ms') = dropWhile ((flip elem) played) ms
         if target == p1Loc
         then do
-          print "Loser"
+          print @String "Loser"
           WS.sendTextData conn $ encode $ Loser
         else do
-          print "They missed"
+          print @String "They missed"
           WS.sendTextData conn $ encode $ Miss $ Location target
           loop p1Loc p2Loc (target : played) ms'
