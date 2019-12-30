@@ -14,11 +14,11 @@ This is based on the [Purescript-Concur + Webpack starter pack](https://github.c
 
 First build the Scribble tool
 
-> docker build -t scribble-codegen scribble-codegen
+> docker build -t scribble-java scribble-java
 
 Out protocol is described in `Game.scr`
 
-> docker run -v `pwd`:/repo --entrypoint "./scribblec.sh -d /repo/web/src/ /repo/Game.scr BattleShips" scribble-server
+> docker run -v `pwd`:/repo --entrypoint "./scribblec.sh -d /repo/web/src/ /repo/Game.scr -api-ps BattleShips" scribble-java
 
 ## Server
 
