@@ -1,8 +1,8 @@
 module Game;
 
 type <purescript> "Int" from "Prim" as int;
-type <purescript> "Config" from "Game.BattleShips" as Config; // Ship configuration
-type <purescript> "Location" from "Game.BattleShips" as Location; // Ship position
+type <purescript> "Config" from "Game.BattleShips.Types" as Config; // Ship configuration
+type <purescript> "Location" from "Game.BattleShips.Types" as Location; // Ship position
 
 explicit global protocol BattleShips(role P1, role P2, role GameServer) {
     Init(Config) connect P1 to GameServer;

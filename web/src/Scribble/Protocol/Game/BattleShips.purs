@@ -15,7 +15,7 @@ import Data.Argonaut.Decode.Generic.Rep (genericDecodeJsonWith)
 import Data.Argonaut.Encode.Generic.Rep (genericEncodeJsonWith)
 import Data.Argonaut.Types.Generic.Rep (Encoding)
 
-import Game.BattleShips (Config, Location)
+import Game.BattleShips.Types (Config, Location)
 
 jsonEncoding :: Encoding
 jsonEncoding =

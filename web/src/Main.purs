@@ -4,32 +4,24 @@ import Prelude
 
 import Concur.Core (Widget)
 import Concur.React (HTML)
-import Concur.React.DOM (button, div', h4', text, input, p')
+import Concur.React.DOM (button, div', h4', text, p')
 import Concur.React.DOM as D
-import Concur.React.Props (onClick, _type, value, onChange, checked, disabled)
+import Concur.React.Props (onClick, value, disabled)
 import Concur.React.Props as P
 import Control.Alt ((<|>))
-import Control.Alternative (empty)
-import Data.DateTime.Instant (unInstant)
-import Data.Maybe (Maybe(..), maybe)
-import Data.Time.Duration (negateDuration)
-import Effect.Aff (Milliseconds(..), delay)
-import Effect.Aff.Class (liftAff)
+import Data.Maybe (Maybe(..), maybe, isJust)
 import Effect.Class (liftEffect)
-import Effect.Console (log)
-import Effect.Now (now)
 import Control.Monad.Rec.Class (forever)
 import Concur.React.Run (runWidgetInDom)
 import Effect (Effect)
 import Effect.Console (log)
-import Data.Maybe (isJust, maybe)
 import Data.Int (fromString)
 import Unsafe.Coerce (unsafeCoerce)
 import Type.Proxy (Proxy(..))
 import Data.Symbol (SProxy(..))
 
 import Scribble.Protocol.Arithmetic.MathServer as MS
-import Scribble.Protocol.Game.BattleShips as BS
+import Game.BattleShips as BS
 
 import Scribble.FSM (Role(..))
 import Scribble.Session (Session, session, connect, send, receive, lift, whileWaiting, select, choice, disconnect)
@@ -37,9 +29,8 @@ import Scribble.Transport.WebSocket (WebSocket, URL(..))
 import Control.Bind.Indexed (ibind)
 import Control.Applicative.Indexed (ipure)
 
-import Data.Newtype (wrap, unwrap)
+import Data.Newtype (unwrap)
 import Data.Foldable (fold)
-import Game.BattleShips as BS
 import Data.Lens.Indexed (itraversed)
 import Data.Lens.Setter (iover)
 
@@ -75,8 +66,8 @@ battleShipsWidgetP1 port = session
       -> BS.Board BS.OpponentTile
       -> Session (Widget HTML) WebSocket BS.S16 BS.S15 Unit
     attack pb ob = do
-      loc <- lift $ h4' [text "Choose a location to attack!"] <> playerBoard pb <> moveSelectionWidget ob
-      send $ BS.Attack loc
+      chosenLoc <- lift $ h4' [text "Choose a location to attack!"] <> playerBoard pb <> moveSelectionWidget ob
+      send $ BS.Attack chosenLoc
       choice
         { winner: do
             void receive
@@ -197,7 +188,7 @@ fibWidget port = do
   _ <- h4' [text $ show res] <> button [onClick] [text "Reset"]
   fibWidget port
   
-sessionFibWidget :: forall a. Int -> Widget HTML Int
+sessionFibWidget :: Int -> Widget HTML Int
 sessionFibWidget port = session 
   (Proxy :: Proxy WebSocket)
   (Role :: Role MS.Client) $ do
