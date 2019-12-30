@@ -11,46 +11,53 @@ import Data.Argonaut.Encode (class EncodeJson)
 import Data.Argonaut.Core (Json) -- From purescript-argonaut-core
 import Data.Generic.Rep (class Generic) -- From purescript-generics-rep
 -- From purescript-argonaut-generic
-import Data.Argonaut.Decode.Generic.Rep (genericDecodeJson)
-import Data.Argonaut.Encode.Generic.Rep (genericEncodeJson)
+import Data.Argonaut.Decode.Generic.Rep (genericDecodeJsonWith)
+import Data.Argonaut.Encode.Generic.Rep (genericEncodeJsonWith)
+import Data.Argonaut.Types.Generic.Rep (Encoding)
 
+jsonEncoding :: Encoding
+jsonEncoding =
+  { tagKey: "tag"
+  , valuesKey: "values"
+  , unwrapSingleArguments: true
+  }
 
 data Add = Add Int Int
 derive instance genericAdd :: Generic Add _
 instance encodeJsonAdd :: EncodeJson Add where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonAdd :: DecodeJson Add where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Connect = Connect
 derive instance genericConnect :: Generic Connect _
 instance encodeJsonConnect :: EncodeJson Connect where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonConnect :: DecodeJson Connect where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Multiply = Multiply Int Int
 derive instance genericMultiply :: Generic Multiply _
 instance encodeJsonMultiply :: EncodeJson Multiply where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonMultiply :: DecodeJson Multiply where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Quit = Quit
 derive instance genericQuit :: Generic Quit _
 instance encodeJsonQuit :: EncodeJson Quit where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonQuit :: DecodeJson Quit where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Product = Product Int
 derive instance genericProduct :: Generic Product _
 instance encodeJsonProduct :: EncodeJson Product where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonProduct :: DecodeJson Product where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 data Sum = Sum Int
 derive instance genericSum :: Generic Sum _
 instance encodeJsonSum :: EncodeJson Sum where
-  encodeJson = genericEncodeJson
+  encodeJson = genericEncodeJsonWith jsonEncoding
 instance decodeJsonSum :: DecodeJson Sum where
-  decodeJson = genericDecodeJson
+  decodeJson = genericDecodeJsonWith jsonEncoding
 
 foreign import data MathServer :: Protocol
 
