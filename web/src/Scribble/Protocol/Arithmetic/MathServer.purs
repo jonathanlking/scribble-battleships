@@ -1,7 +1,6 @@
 module Scribble.Protocol.Arithmetic.MathServer where
 
 import Scribble.FSM
-import Prim.RowList (Cons, Nil)
 import Data.Void (Void)
 import Data.Tuple (Tuple)
 
@@ -14,6 +13,7 @@ import Data.Generic.Rep (class Generic) -- From purescript-generics-rep
 import Data.Argonaut.Decode.Generic.Rep (genericDecodeJsonWith)
 import Data.Argonaut.Encode.Generic.Rep (genericEncodeJsonWith)
 import Data.Argonaut.Types.Generic.Rep (Encoding)
+
 
 jsonEncoding :: Encoding
 jsonEncoding =
@@ -83,7 +83,7 @@ instance sendS11 :: Send Server S11Connected S13 Connect
 instance sendS13Add :: Send Server S13Add S14 Add
 instance sendS13Multiply :: Send Server S13Multiply S15 Multiply
 instance sendS13Quit :: Send Server S13Quit S16 Quit
-instance selectS13 :: Select Server S13 (Cons "multiply" S13Multiply (Cons "quit" S13Quit (Cons "add" S13Add Nil)))
+instance selectS13 :: Select Server S13 ("multiply" :: S13Multiply, "quit" :: S13Quit, "add" :: S13Add)
 instance receiveS14 :: Receive Server S14 S13 Sum
 instance receiveS15 :: Receive Server S15 S13 Product
 instance disconnectS16 :: Disconnect Client Server S16 S12
@@ -108,7 +108,7 @@ instance acceptS26 :: Accept Server Client S26 S28
 instance receiveS28Add :: Receive Client S28Add S29 Add
 instance receiveS28Multiply :: Receive Client S28Multiply S30 Multiply
 instance receiveS28Quit :: Receive Client S28Quit S31 Quit
-instance branchS28 :: Branch Server Client S28 (Cons "multiply" S28Multiply (Cons "quit" S28Quit (Cons "add" S28Add Nil)))
+instance branchS28 :: Branch Server Client S28 ("multiply" :: S28Multiply, "quit" :: S28Quit, "add" :: S28Add)
 instance sendS29 :: Send Client S29 S28 Sum
 instance sendS30 :: Send Client S30 S28 Product
 instance disconnectS31 :: Disconnect Server Client S31 S27

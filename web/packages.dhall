@@ -139,7 +139,7 @@ let additions =
         , "profunctor-lenses"
         ]
         "https://github.com/jonathanlking/purescript-scribble"
-        "7a890a1399dffe2282cab3a394f7d6c9de4fedf8"
+        "v2.0.0-alpha"
   }
 
 in  upstream // overrides // additions
