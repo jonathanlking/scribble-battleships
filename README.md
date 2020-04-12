@@ -18,7 +18,7 @@ First build the Scribble tool
 
 Out protocol is described in `Game.scr`
 
-> docker run -v `pwd`:/repo --entrypoint "./scribblec.sh -d /repo/web/src/ /repo/Game.scr -api-ps BattleShips" scribble-java
+> docker run -v `pwd`:/repo scribble-java -d /repo/web/src/ /repo/Game.scr -api-ps BattleShips
 
 ## Server
 
